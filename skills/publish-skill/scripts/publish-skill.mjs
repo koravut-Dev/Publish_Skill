@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const FLAGS = new Set(['dry-run', 'plugin', 'force', 'help']);
+const FLAGS = new Set(['dry-run', 'plugin', 'force', 'fresh', 'help']);
 
 function parseArgs(argv) {
   const out = {};
@@ -37,6 +37,8 @@ const USAGE = `Usage: node publish-skill.mjs --skill <dir> --repo <dir> [options
   --license <id>    MIT (default) | none
   --plugin          also write .claude-plugin/ for Claude Code marketplace
   --force           overwrite existing skills/<name> without complaint
+  --fresh           regenerate the whole README + assets/banner.svg (default keeps
+                    an existing README and only refreshes the skills block)
   --dry-run         show what would happen, write nothing`;
 
 // ---- frontmatter -----------------------------------------------------------
@@ -139,25 +141,95 @@ function shortDesc(d) {
   const cut = t.search(/\s(ใช้เมื่อ|Use when|Use this when|Trigger)/i);
   if (cut > 20) t = t.slice(0, cut).trim();
   if (t.length > 180) t = t.slice(0, 177).trimEnd() + '...';
-  return t.replace(/\|/g, '\\|');
+  return t;
 }
 
-function readmeHeader({ title, ref, tagline, license, count }) {
-  const lic = license === 'none' ? '' : ` ![License](https://img.shields.io/badge/license-${encodeURIComponent(license.toUpperCase())}-blue.svg)`;
-  const gh = ref.includes('<') ? '' : ` [![Stars](https://img.shields.io/github/stars/${ref}?style=social)](https://github.com/${ref})`;
+const xml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const html = xml;
+
+// Self-contained animated banner. Dark by default, switches with prefers-color-scheme.
+function bannerSvg({ title, tagline, count }) {
+  const fs = Math.max(40, Math.min(88, Math.floor(1000 / (Math.max(title.length, 6) * 0.6))));
+  const tg = tagline.length > 90 ? tagline.slice(0, 87) + '...' : tagline;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 340" width="1280" height="340" role="img" aria-label="${xml(title)}">
+  <title>${xml(title)}</title>
+  <style>
+    .bg-a{stop-color:#0a0a1f}.bg-b{stop-color:#1b0b3a}
+    .o1{fill:#22d3ee}.o2{fill:#a855f7}.o3{fill:#f472b6}
+    .grid{stroke:#ffffff;stroke-opacity:.05}
+    .t1{stop-color:#67e8f9}.t2{stop-color:#c084fc}.t3{stop-color:#f9a8d4}
+    .tag{fill:#c7c9e6;font:400 24px 'Segoe UI',system-ui,-apple-system,'Noto Sans Thai',sans-serif}
+    .pill{fill:#ffffff;fill-opacity:.08;stroke:#ffffff;stroke-opacity:.2}
+    .pilltxt{fill:#e5e7ff;font:600 14px 'Segoe UI',system-ui,sans-serif;letter-spacing:3px}
+    .title{font:800 ${fs}px 'Segoe UI',system-ui,-apple-system,'Noto Sans Thai',sans-serif;letter-spacing:-2px}
+    @media (prefers-color-scheme: light){
+      .bg-a{stop-color:#f5f3ff}.bg-b{stop-color:#e0f2fe}
+      .o1{fill:#06b6d4}.o2{fill:#8b5cf6}.o3{fill:#ec4899}
+      .grid{stroke:#4c1d95;stroke-opacity:.07}
+      .t1{stop-color:#0891b2}.t2{stop-color:#7c3aed}.t3{stop-color:#db2777}
+      .tag{fill:#4b5563}
+      .pill{fill:#4c1d95;fill-opacity:.07;stroke:#4c1d95;stroke-opacity:.25}
+      .pilltxt{fill:#4c1d95}
+    }
+    @media (prefers-reduced-motion: reduce){ animateTransform,animate{display:none} }
+  </style>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop class="bg-a" offset="0"/><stop class="bg-b" offset="1"/></linearGradient>
+    <linearGradient id="tx" x1="0" y1="0" x2="1" y2="0">
+      <stop class="t1" offset="0"/><stop class="t2" offset=".55"/><stop class="t3" offset="1"/>
+      <animate attributeName="x1" values="0;-0.4;0" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="1;0.6;1" dur="9s" repeatCount="indefinite"/>
+    </linearGradient>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="70"/></filter>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path class="grid" d="M40 0H0V40" fill="none" stroke-width="1"/></pattern>
+    <clipPath id="r"><rect width="1280" height="340" rx="28"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="1280" height="340" fill="url(#bg)"/>
+    <g filter="url(#blur)" opacity=".55">
+      <circle class="o1" cx="180" cy="80" r="130"><animateTransform attributeName="transform" type="translate" values="0 0;90 50;0 0" dur="14s" repeatCount="indefinite"/></circle>
+      <circle class="o2" cx="760" cy="300" r="150"><animateTransform attributeName="transform" type="translate" values="0 0;-120 -40;0 0" dur="17s" repeatCount="indefinite"/></circle>
+      <circle class="o3" cx="1120" cy="70" r="120"><animateTransform attributeName="transform" type="translate" values="0 0;-60 70;0 0" dur="12s" repeatCount="indefinite"/></circle>
+    </g>
+    <rect width="1280" height="340" fill="url(#g)"/>
+  </g>
+  <g transform="translate(640 0)" text-anchor="middle">
+    <rect class="pill" x="-118" y="40" width="236" height="34" rx="17"/>
+    <text class="pilltxt" y="62">AGENT SKILLS · ${count}</text>
+    <text class="title" y="190" fill="url(#tx)">${xml(title)}</text>
+    <text class="tag" y="250">${xml(tg)}</text>
+  </g>
+</svg>
+`;
+}
+
+function readmeHeader({ title, ref, license, count }) {
+  const real = !ref.includes('<');
+  const lic = license === 'none' ? '' : `<img alt="License" src="https://img.shields.io/badge/LICENSE-${encodeURIComponent(license.toUpperCase())}-22d3ee?style=for-the-badge&labelColor=0a0a1f">\n`;
+  const star = real
+    ? `<a href="https://github.com/${ref}"><img alt="Stars" src="https://img.shields.io/github/stars/${ref}?style=for-the-badge&logo=github&labelColor=0a0a1f&color=a855f7"></a>\n`
+    : '';
   return `<div align="center">
 
-# ${title}
+<img src="assets/banner.svg" alt="${html(title)}" width="100%">
 
-**${tagline}**
+<br><br>
 
-![Agent Skills](https://img.shields.io/badge/Agent%20Skills-compatible-8A2BE2.svg)${lic} ![Skills](https://img.shields.io/badge/skills-${count}-brightgreen.svg) ![Zero dependencies](https://img.shields.io/badge/dependencies-0-lightgrey.svg)${gh}
+<img alt="Agent Skills" src="https://img.shields.io/badge/AGENT%20SKILLS-COMPATIBLE-a855f7?style=for-the-badge&labelColor=0a0a1f">
+${lic}<img alt="Skills" src="https://img.shields.io/badge/SKILLS-${count}-f472b6?style=for-the-badge&labelColor=0a0a1f">
+<img alt="Dependencies" src="https://img.shields.io/badge/DEPENDENCIES-0-34d399?style=for-the-badge&labelColor=0a0a1f">
+${star}
+<br>
 
-[Skills](#-skills) · [Install](#-install) · [Layout](#-repo-layout) · [Contributing](#-contributing)
+**[Skills](#skills)** &nbsp;·&nbsp; **[Install](#install)** &nbsp;·&nbsp; **[How it works](#how-it-works)** &nbsp;·&nbsp; **[Layout](#repo-layout)** &nbsp;·&nbsp; **[Contribute](#contributing)**
+
+<br>
+
+${FENCE}bash
+npx skills add ${ref}
+${FENCE}
 
 </div>
-
----
 
 `;
 }
@@ -166,36 +238,51 @@ function readmeBlock(skills, gh, plugin) {
   const ref = gh || '<owner>/<repo>';
   const base = path.posix.basename(ref);
   const first = skills[0]?.name || '<skill-name>';
-  const rows = skills
-    .map((s) => `| **${s.name}** | ${shortDesc(s.description)} | <code>npx skills add ${ref} --skill ${s.name}</code> |`)
-    .join('\n');
+
+  const cell = (s) =>
+    `<td width="50%" valign="top">\n\n#### ${s.name}\n\n${html(shortDesc(s.description))}\n\n${FENCE}bash\nnpx skills add ${ref} --skill ${s.name}\n${FENCE}\n\n</td>`;
+  const rowsHtml = [];
+  for (let i = 0; i < skills.length; i += 2) {
+    const pair = [cell(skills[i]), skills[i + 1] ? cell(skills[i + 1]) : '<td width="50%"></td>'];
+    rowsHtml.push(`<tr>\n${pair.join('\n')}\n</tr>`);
+  }
+
   const tree = [
     `${base}/`,
     '├── README.md',
     '├── LICENSE',
+    '├── assets/',
+    '│   └── banner.svg',
     ...(plugin ? ['├── .claude-plugin/', '│   ├── plugin.json', '│   └── marketplace.json'] : []),
     '└── skills/',
     ...skills.map((s, i) => `    ${i === skills.length - 1 ? '└──' : '├──'} ${s.name}/SKILL.md`),
   ].join('\n');
+
+  const n = plugin ? 3 : 2;
   const pluginSection = plugin
     ? `
-### Option 2 — Claude Code plugin marketplace
+<details>
+<summary><b>Claude Code plugin marketplace</b></summary>
 
-${FENCE}
+${FENCE}text
 /plugin marketplace add ${ref}
 ${FENCE}
+
+</details>
 `
     : '';
+
   return `${START}
-## ✨ Skills
+## Skills
 
-| Skill | What it does | Install just this one |
-|---|---|---|
-${rows}
+<table>
+${rowsHtml.join('\n')}
+</table>
 
-## 🚀 Install
+## Install
 
-### Option 1 — one command (recommended)
+> [!TIP]
+> One command installs every skill in this repo into all the agents it detects.
 
 ${FENCE}bash
 # every skill in this repo
@@ -205,15 +292,13 @@ npx skills add ${ref}
 npx skills add ${ref} --skill ${first}
 ${FENCE}
 ${pluginSection}
-### ${plugin ? 'Option 3' : 'Option 2'} — manual copy
+<details>
+<summary><b>Manual copy</b></summary>
 
 ${FENCE}bash
 git clone https://github.com/${ref}.git
 cp -r ${base}/skills/${first} ~/.claude/skills/
 ${FENCE}
-
-<details>
-<summary>Where do skills live for each agent?</summary>
 
 | Agent | Personal | Project |
 |---|---|---|
@@ -221,11 +306,25 @@ ${FENCE}
 | Codex CLI | \`~/.codex/skills/\` | \`.agents/skills/\` |
 | Others | see the tool's docs | see the tool's docs |
 
-Directories and CLI flags can change; check each tool's current documentation.
-
 </details>
 
-## 📁 Repo layout
+> [!IMPORTANT]
+> Skills run with the full permissions of your agent. Read a skill before you install it. Directories and CLI flags change over time, so check each tool's current documentation.
+
+## How it works
+
+${FENCE}mermaid
+flowchart LR
+    A["npx skills add"] --> B["Clone repo"]
+    B --> C["Find skills/*/SKILL.md"]
+    C --> D["Install for each agent"]
+    D --> E["Claude Code"]
+    D --> F["Codex"]
+    D --> G["Cursor"]
+    D --> H["Gemini CLI"]
+${FENCE}
+
+## Repo layout
 
 ${FENCE}text
 ${tree}
@@ -233,13 +332,22 @@ ${FENCE}
 
 Each skill folder name equals the \`name\` in its \`SKILL.md\` frontmatter, as the Agent Skills standard requires.
 
-## 🤝 Contributing
+## Contributing
 
 1. Add or edit a skill under \`skills/<name>/SKILL.md\`.
 2. Keep \`name\` (lowercase-hyphen, equal to the folder) and \`description\` in the frontmatter.
 3. Never commit secrets; the publish script scans for them.
 4. Open a pull request.
 ${END}`;
+}
+
+function readmeFooter() {
+  return `<div align="center">
+
+<sub>Generated with the <code>publish-skill</code> skill &nbsp;·&nbsp; <a href="#">Back to top ↑</a></sub>
+
+</div>
+`;
 }
 
 function licenseMIT(author) {
@@ -309,17 +417,24 @@ const repoName = path.basename(repo);
 const block = readmeBlock(skills, args.github, !!args.plugin);
 const readmePath = path.join(repo, 'README.md');
 let readme;
-if (fs.existsSync(readmePath)) {
+const full = !fs.existsSync(readmePath) || !!args.fresh;
+if (!full) {
   const cur = fs.readFileSync(readmePath, 'utf8');
   readme = cur.includes(START) && cur.includes(END)
     ? cur.replace(new RegExp(`${START}[\\s\\S]*?${END}`), () => block)
     : `${cur.trimEnd()}\n\n${block}\n`;
 } else {
   const title = args.github ? args.github.split('/')[1] : repoName;
-  const tagline = args.tagline || `Install ${skills.length === 1 ? skills[0].name : 'these agent skills'} with a single command.`;
-  readme = `${readmeHeader({ title, ref: args.github || '<owner>/<repo>', tagline, license: (args.license || 'MIT').toLowerCase(), count: skills.length })}${block}\n\n---\n\n<div align="center"><sub>Made with the <code>publish-skill</code> skill</sub></div>\n`;
+  const tagline = args.tagline || `Install ${skills.length === 1 ? skills[0].name : 'these agent skills'} with a single command`;
+  const license = (args.license || 'MIT').toLowerCase();
+  readme = `${readmeHeader({ title, ref: args.github || '<owner>/<repo>', license, count: skills.length })}${block}\n\n${readmeFooter()}`;
+  say('write assets/banner.svg');
+  if (!dry) {
+    fs.mkdirSync(path.join(repo, 'assets'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'assets', 'banner.svg'), bannerSvg({ title, tagline, count: skills.length }));
+  }
 }
-say(`write README.md (${skills.length} skill${skills.length === 1 ? '' : 's'})`);
+say(`write README.md (${skills.length} skill${skills.length === 1 ? '' : 's'}${full ? ', full' : ', block only'})`);
 if (!dry) fs.writeFileSync(readmePath, readme);
 
 // LICENSE

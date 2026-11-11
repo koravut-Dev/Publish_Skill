@@ -1,27 +1,51 @@
 <div align="center">
 
-# Publish_Skill
+<img src="assets/banner.svg" alt="Publish_Skill" width="100%">
 
-**Package any agent skill into an installable git repo with one command**
+<br><br>
 
-![Agent Skills](https://img.shields.io/badge/Agent%20Skills-compatible-8A2BE2.svg) ![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Skills](https://img.shields.io/badge/skills-1-brightgreen.svg) ![Zero dependencies](https://img.shields.io/badge/dependencies-0-lightgrey.svg) [![Stars](https://img.shields.io/github/stars/koravut-Dev/Publish_Skill?style=social)](https://github.com/koravut-Dev/Publish_Skill)
+<img alt="Agent Skills" src="https://img.shields.io/badge/AGENT%20SKILLS-COMPATIBLE-a855f7?style=for-the-badge&labelColor=0a0a1f">
+<img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-22d3ee?style=for-the-badge&labelColor=0a0a1f">
+<img alt="Skills" src="https://img.shields.io/badge/SKILLS-1-f472b6?style=for-the-badge&labelColor=0a0a1f">
+<img alt="Dependencies" src="https://img.shields.io/badge/DEPENDENCIES-0-34d399?style=for-the-badge&labelColor=0a0a1f">
+<a href="https://github.com/koravut-Dev/Publish_Skill"><img alt="Stars" src="https://img.shields.io/github/stars/koravut-Dev/Publish_Skill?style=for-the-badge&logo=github&labelColor=0a0a1f&color=a855f7"></a>
 
-[Skills](#-skills) · [Install](#-install) · [Layout](#-repo-layout) · [Contributing](#-contributing)
+<br>
+
+**[Skills](#skills)** &nbsp;·&nbsp; **[Install](#install)** &nbsp;·&nbsp; **[How it works](#how-it-works)** &nbsp;·&nbsp; **[Layout](#repo-layout)** &nbsp;·&nbsp; **[Contribute](#contributing)**
+
+<br>
+
+```bash
+npx skills add koravut-Dev/Publish_Skill
+```
 
 </div>
 
----
-
 <!-- skills:start -->
-## ✨ Skills
+## Skills
 
-| Skill | What it does | Install just this one |
-|---|---|---|
-| **publish-skill** | นำสกิลที่สร้างไว้ (โฟลเดอร์ที่มี SKILL.md) เข้า git repo ตามมาตรฐาน Agent Skills เพื่อให้คนอื่นติดตั้งได้ด้วยคำสั่งเดียว เช่น `npx skills add owner/repo` | <code>npx skills add koravut-Dev/Publish_Skill --skill publish-skill</code> |
+<table>
+<tr>
+<td width="50%" valign="top">
 
-## 🚀 Install
+#### publish-skill
 
-### Option 1 — one command (recommended)
+นำสกิลที่สร้างไว้ (โฟลเดอร์ที่มี SKILL.md) เข้า git repo ตามมาตรฐาน Agent Skills เพื่อให้คนอื่นติดตั้งได้ด้วยคำสั่งเดียว เช่น `npx skills add owner/repo`
+
+```bash
+npx skills add koravut-Dev/Publish_Skill --skill publish-skill
+```
+
+</td>
+<td width="50%"></td>
+</tr>
+</table>
+
+## Install
+
+> [!TIP]
+> One command installs every skill in this repo into all the agents it detects.
 
 ```bash
 # every skill in this repo
@@ -31,21 +55,22 @@ npx skills add koravut-Dev/Publish_Skill
 npx skills add koravut-Dev/Publish_Skill --skill publish-skill
 ```
 
-### Option 2 — Claude Code plugin marketplace
+<details>
+<summary><b>Claude Code plugin marketplace</b></summary>
 
-```
+```text
 /plugin marketplace add koravut-Dev/Publish_Skill
 ```
 
-### Option 3 — manual copy
+</details>
+
+<details>
+<summary><b>Manual copy</b></summary>
 
 ```bash
 git clone https://github.com/koravut-Dev/Publish_Skill.git
 cp -r Publish_Skill/skills/publish-skill ~/.claude/skills/
 ```
-
-<details>
-<summary>Where do skills live for each agent?</summary>
 
 | Agent | Personal | Project |
 |---|---|---|
@@ -53,16 +78,32 @@ cp -r Publish_Skill/skills/publish-skill ~/.claude/skills/
 | Codex CLI | `~/.codex/skills/` | `.agents/skills/` |
 | Others | see the tool's docs | see the tool's docs |
 
-Directories and CLI flags can change; check each tool's current documentation.
-
 </details>
 
-## 📁 Repo layout
+> [!IMPORTANT]
+> Skills run with the full permissions of your agent. Read a skill before you install it. Directories and CLI flags change over time, so check each tool's current documentation.
+
+## How it works
+
+```mermaid
+flowchart LR
+    A["npx skills add"] --> B["Clone repo"]
+    B --> C["Find skills/*/SKILL.md"]
+    C --> D["Install for each agent"]
+    D --> E["Claude Code"]
+    D --> F["Codex"]
+    D --> G["Cursor"]
+    D --> H["Gemini CLI"]
+```
+
+## Repo layout
 
 ```text
 Publish_Skill/
 ├── README.md
 ├── LICENSE
+├── assets/
+│   └── banner.svg
 ├── .claude-plugin/
 │   ├── plugin.json
 │   └── marketplace.json
@@ -72,7 +113,7 @@ Publish_Skill/
 
 Each skill folder name equals the `name` in its `SKILL.md` frontmatter, as the Agent Skills standard requires.
 
-## 🤝 Contributing
+## Contributing
 
 1. Add or edit a skill under `skills/<name>/SKILL.md`.
 2. Keep `name` (lowercase-hyphen, equal to the folder) and `description` in the frontmatter.
@@ -80,6 +121,8 @@ Each skill folder name equals the `name` in its `SKILL.md` frontmatter, as the A
 4. Open a pull request.
 <!-- skills:end -->
 
----
+<div align="center">
 
-<div align="center"><sub>Made with the <code>publish-skill</code> skill</sub></div>
+<sub>Generated with the <code>publish-skill</code> skill &nbsp;·&nbsp; <a href="#">Back to top ↑</a></sub>
+
+</div>

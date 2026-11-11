@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 340" width="1280" height="340" role="img" aria-label="Publish_Skill">
+  <title>Publish_Skill</title>
+  <style>
+    .bg-a{stop-color:#0a0a1f}.bg-b{stop-color:#1b0b3a}
+    .o1{fill:#22d3ee}.o2{fill:#a855f7}.o3{fill:#f472b6}
+    .grid{stroke:#ffffff;stroke-opacity:.05}
+    .t1{stop-color:#67e8f9}.t2{stop-color:#c084fc}.t3{stop-color:#f9a8d4}
+    .tag{fill:#c7c9e6;font:400 24px 'Segoe UI',system-ui,-apple-system,'Noto Sans Thai',sans-serif}
+    .pill{fill:#ffffff;fill-opacity:.08;stroke:#ffffff;stroke-opacity:.2}
+    .pilltxt{fill:#e5e7ff;font:600 14px 'Segoe UI',system-ui,sans-serif;letter-spacing:3px}
+    .title{font:800 88px 'Segoe UI',system-ui,-apple-system,'Noto Sans Thai',sans-serif;letter-spacing:-2px}
+    @media (prefers-color-scheme: light){
+      .bg-a{stop-color:#f5f3ff}.bg-b{stop-color:#e0f2fe}
+      .o1{fill:#06b6d4}.o2{fill:#8b5cf6}.o3{fill:#ec4899}
+      .grid{stroke:#4c1d95;stroke-opacity:.07}
+      .t1{stop-color:#0891b2}.t2{stop-color:#7c3aed}.t3{stop-color:#db2777}
+      .tag{fill:#4b5563}
+      .pill{fill:#4c1d95;fill-opacity:.07;stroke:#4c1d95;stroke-opacity:.25}
+      .pilltxt{fill:#4c1d95}
+    }
+    @media (prefers-reduced-motion: reduce){ animateTransform,animate{display:none} }
+  </style>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop class="bg-a" offset="0"/><stop class="bg-b" offset="1"/></linearGradient>
+    <linearGradient id="tx" x1="0" y1="0" x2="1" y2="0">
+      <stop class="t1" offset="0"/><stop class="t2" offset=".55"/><stop class="t3" offset="1"/>
+      <animate attributeName="x1" values="0;-0.4;0" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="1;0.6;1" dur="9s" repeatCount="indefinite"/>
+    </linearGradient>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="70"/></filter>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path class="grid" d="M40 0H0V40" fill="none" stroke-width="1"/></pattern>
+    <clipPath id="r"><rect width="1280" height="340" rx="28"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="1280" height="340" fill="url(#bg)"/>
+    <g filter="url(#blur)" opacity=".55">
+      <circle class="o1" cx="180" cy="80" r="130"><animateTransform attributeName="transform" type="translate" values="0 0;90 50;0 0" dur="14s" repeatCount="indefinite"/></circle>
+      <circle class="o2" cx="760" cy="300" r="150"><animateTransform attributeName="transform" type="translate" values="0 0;-120 -40;0 0" dur="17s" repeatCount="indefinite"/></circle>
+      <circle class="o3" cx="1120" cy="70" r="120"><animateTransform attributeName="transform" type="translate" values="0 0;-60 70;0 0" dur="12s" repeatCount="indefinite"/></circle>
+    </g>
+    <rect width="1280" height="340" fill="url(#g)"/>
+  </g>
+  <g transform="translate(640 0)" text-anchor="middle">
+    <rect class="pill" x="-118" y="40" width="236" height="34" rx="17"/>
+    <text class="pilltxt" y="62">AGENT SKILLS · 1</text>
+    <text class="title" y="190" fill="url(#tx)">Publish_Skill</text>
+    <text class="tag" y="250">Package any agent skill into an installable git repo with one command</text>
+  </g>
+</svg>
