@@ -27,7 +27,7 @@ npx skills add koravut-Dev/Publish_Skill
 
 <table>
 <tr>
-<td width="50%" valign="top">
+<td colspan="2" valign="top">
 
 #### publish-skill
 
@@ -38,7 +38,6 @@ npx skills add koravut-Dev/Publish_Skill --skill publish-skill
 ```
 
 </td>
-<td width="50%"></td>
 </tr>
 </table>
 
@@ -87,13 +86,13 @@ cp -r Publish_Skill/skills/publish-skill ~/.claude/skills/
 
 ```mermaid
 flowchart LR
-    A["npx skills add"] --> B["Clone repo"]
-    B --> C["Find skills/*/SKILL.md"]
-    C --> D["Install for each agent"]
-    D --> E["Claude Code"]
-    D --> F["Codex"]
-    D --> G["Cursor"]
-    D --> H["Gemini CLI"]
+    A[npx skills add] --> B[Clone repo]
+    B --> C[Find SKILL.md files]
+    C --> D[Install for each agent]
+    D --> E[Claude Code]
+    D --> F[Codex]
+    D --> G[Cursor]
+    D --> H[Gemini CLI]
 ```
 
 ## Repo layout

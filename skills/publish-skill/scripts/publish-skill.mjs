@@ -239,11 +239,14 @@ function readmeBlock(skills, gh, plugin) {
   const base = path.posix.basename(ref);
   const first = skills[0]?.name || '<skill-name>';
 
-  const cell = (s) =>
-    `<td width="50%" valign="top">\n\n#### ${s.name}\n\n${html(shortDesc(s.description))}\n\n${FENCE}bash\nnpx skills add ${ref} --skill ${s.name}\n${FENCE}\n\n</td>`;
+  const cell = (s, attrs) =>
+    `<td ${attrs} valign="top">\n\n#### ${s.name}\n\n${html(shortDesc(s.description))}\n\n${FENCE}bash\nnpx skills add ${ref} --skill ${s.name}\n${FENCE}\n\n</td>`;
   const rowsHtml = [];
   for (let i = 0; i < skills.length; i += 2) {
-    const pair = [cell(skills[i]), skills[i + 1] ? cell(skills[i + 1]) : '<td width="50%"></td>'];
+    // a lone last card spans the full row instead of leaving an empty cell
+    const pair = skills[i + 1]
+      ? [cell(skills[i], 'width="50%"'), cell(skills[i + 1], 'width="50%"')]
+      : [cell(skills[i], 'colspan="2"')];
     rowsHtml.push(`<tr>\n${pair.join('\n')}\n</tr>`);
   }
 
@@ -315,13 +318,13 @@ ${FENCE}
 
 ${FENCE}mermaid
 flowchart LR
-    A["npx skills add"] --> B["Clone repo"]
-    B --> C["Find skills/*/SKILL.md"]
-    C --> D["Install for each agent"]
-    D --> E["Claude Code"]
-    D --> F["Codex"]
-    D --> G["Cursor"]
-    D --> H["Gemini CLI"]
+    A[npx skills add] --> B[Clone repo]
+    B --> C[Find SKILL.md files]
+    C --> D[Install for each agent]
+    D --> E[Claude Code]
+    D --> F[Codex]
+    D --> G[Cursor]
+    D --> H[Gemini CLI]
 ${FENCE}
 
 ## Repo layout
