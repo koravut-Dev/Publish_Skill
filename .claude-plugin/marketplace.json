@@ -1,0 +1,13 @@
+{
+  "name": "Publish_Skill",
+  "owner": {
+    "name": "koravut-Dev"
+  },
+  "plugins": [
+    {
+      "name": "Publish_Skill",
+      "source": "./",
+      "description": "Agent skills: publish-skill"
+    }
+  ]
+}

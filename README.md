@@ -31,7 +31,13 @@ npx skills add koravut-Dev/Publish_Skill
 npx skills add koravut-Dev/Publish_Skill --skill publish-skill
 ```
 
-### Option 2 — manual copy
+### Option 2 — Claude Code plugin marketplace
+
+```
+/plugin marketplace add koravut-Dev/Publish_Skill
+```
+
+### Option 3 — manual copy
 
 ```bash
 git clone https://github.com/koravut-Dev/Publish_Skill.git
@@ -57,6 +63,9 @@ Directories and CLI flags can change; check each tool's current documentation.
 Publish_Skill/
 ├── README.md
 ├── LICENSE
+├── .claude-plugin/
+│   ├── plugin.json
+│   └── marketplace.json
 └── skills/
     └── publish-skill/SKILL.md
 ```
