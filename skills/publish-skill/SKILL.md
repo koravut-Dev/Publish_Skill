@@ -22,6 +22,15 @@ all work from the same repo.
     └── marketplace.json
 ```
 
+## Requirements
+
+- `node` 18 or newer (runs the bundled script; no packages to install).
+- `git`, only for the optional git steps.
+- `gh` (GitHub CLI), optional: only for `gh repo create`. Without it, the
+  user creates the repo on GitHub and adds a remote.
+
+If `node` is missing, stop and tell the user; do not hand-build the repo.
+
 ## Workflow
 
 1. **Locate inputs.** Ask for (or infer) the skill folder, the target repo
@@ -45,6 +54,15 @@ all work from the same repo.
    match, secret scan), copies it into `skills/<name>/`, regenerates the
    README block between `<!-- skills:start -->` and `<!-- skills:end -->`,
    and creates `LICENSE` if missing.
+
+   - If `skills/<name>/` already exists in the repo the script stops.
+     `--force` replaces it, deleting files that are no longer in the
+     source: show the dry run and get a yes before adding `--force`.
+   - If `--skill` already points at `<repo>/skills/<name>`, nothing is
+     copied or deleted; only the README and metadata are refreshed.
+   - Secrets files (`.env*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, SSH private
+     keys) are never copied. Files the scan could not read (binary, over
+     1 MB) are listed as warnings: relay every warning to the user.
 4. **Report** the result and the install commands it prints.
 5. **Git steps are the user's call.** Offer these, run only on a clear yes:
 

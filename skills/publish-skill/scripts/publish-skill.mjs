@@ -36,7 +36,7 @@ const USAGE = `Usage: node publish-skill.mjs --skill <dir> --repo <dir> [options
   --tagline <text>  one-line tagline shown under the README title
   --license <id>    MIT (default) | none
   --plugin          also write .claude-plugin/ for Claude Code marketplace
-  --force           overwrite existing skills/<name> without complaint
+  --force           replace an existing skills/<name> (without it the script stops)
   --fresh           regenerate the whole README + assets/banner.svg (default keeps
                     an existing README and only refreshes the skills block)
   --dry-run         show what would happen, write nothing`;
@@ -73,6 +73,10 @@ const SECRET_PATTERNS = [
 ];
 const SKIP_DIRS = new Set(['.git', 'node_modules', '__pycache__']);
 const SKIP_FILES = new Set(['.DS_Store', 'Thumbs.db']);
+// Files that usually hold secrets: never copied into the repo.
+const isSensitive = (name) =>
+  /^\.env(\..*)?$/i.test(name) || /\.(pem|key|p12|pfx)$/i.test(name) || /^id_(rsa|dsa|ecdsa|ed25519)$/.test(name);
+const isSkipped = (name) => SKIP_DIRS.has(name) || SKIP_FILES.has(name) || isSensitive(name);
 
 function* walk(dir) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -108,10 +112,24 @@ function validateSkill(skillDir) {
       warnings.push(`non-standard frontmatter field "${k}" may be ignored by other agents`);
 
   for (const f of walk(skillDir)) {
-    if (fs.statSync(f).size > 1_000_000) continue;
+    const rel = path.relative(skillDir, f);
+    if (isSensitive(path.basename(f))) {
+      warnings.push(`${rel} looks like a secrets file and will NOT be copied`);
+      continue;
+    }
+    if (fs.statSync(f).size > 1_000_000) {
+      warnings.push(`${rel} is larger than 1 MB: copied but not scanned for secrets`);
+      continue;
+    }
     let text;
-    try { text = fs.readFileSync(f, 'utf8'); } catch { continue; }
-    if (text.includes('\u0000')) continue; // binary
+    try { text = fs.readFileSync(f, 'utf8'); } catch {
+      warnings.push(`${rel} could not be read: copied but not scanned for secrets`);
+      continue;
+    }
+    if (text.includes('\u0000')) { // binary
+      warnings.push(`${rel} is binary: copied but not scanned for secrets`);
+      continue;
+    }
     for (const [re, label] of SECRET_PATTERNS)
       if (re.test(text)) errors.push(`possible ${label} in ${path.relative(skillDir, f)}`);
   }
@@ -399,16 +417,36 @@ const dest = path.join(repo, 'skills', fm.name);
 const say = (m) => console.log(`${dry ? '[dry-run] ' : ''}${m}`);
 const exists = fs.existsSync(dest);
 
-if (exists && !args.force) say(`updating existing skills/${fm.name} (files removed from the source will be removed here)`);
-say(`${exists ? 'replace' : 'copy'} ${skillDir} -> ${dest}`);
+// Never delete the source: the skill may already live at its destination.
+const norm = (p) => (process.platform === 'win32' ? p.toLowerCase() : p);
+const real = (p) => norm(fs.existsSync(p) ? fs.realpathSync(p) : p);
+const isInside = (child, parent) => {
+  const r = path.relative(parent, child);
+  return r !== '' && !r.startsWith('..') && !path.isAbsolute(r);
+};
+const srcReal = real(skillDir);
+const destReal = real(dest);
+const inPlace = srcReal === destReal;
+if (!inPlace && (isInside(destReal, srcReal) || isInside(srcReal, destReal)))
+  fail(`skill folder and destination overlap (${skillDir} vs ${dest}); nothing was written`);
 
-if (!dry) {
-  fs.mkdirSync(path.join(repo, 'skills'), { recursive: true });
-  fs.rmSync(dest, { recursive: true, force: true });
-  fs.cpSync(skillDir, dest, {
-    recursive: true,
-    filter: (src) => !SKIP_DIRS.has(path.basename(src)) && !SKIP_FILES.has(path.basename(src)),
-  });
+if (inPlace) {
+  say(`skill already lives at ${dest}; skipping copy`);
+  for (const f of walk(skillDir))
+    if (isSensitive(path.basename(f)))
+      fail(`${path.relative(skillDir, f)} looks like a secrets file inside the repo; remove it first. Nothing was written`);
+} else {
+  if (exists && !args.force)
+    fail(`skills/${fm.name} already exists in the repo; rerun with --force to replace it (files missing from the source are removed). Nothing was written`);
+  say(`${exists ? 'replace' : 'copy'} ${skillDir} -> ${dest}`);
+  if (!dry) {
+    fs.mkdirSync(path.join(repo, 'skills'), { recursive: true });
+    fs.rmSync(dest, { recursive: true, force: true });
+    fs.cpSync(skillDir, dest, {
+      recursive: true,
+      filter: (src) => src === skillDir || !isSkipped(path.basename(src)),
+    });
+  }
 }
 
 // README
