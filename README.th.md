@@ -16,7 +16,7 @@
 
 [English](README.md) &nbsp;·&nbsp; **ไทย**
 
-**[สกิล](#skills)** &nbsp;·&nbsp; **[ติดตั้ง](#install)** &nbsp;·&nbsp; **[ทำงานอย่างไร](#how-it-works)** &nbsp;·&nbsp; **[โครงสร้าง](#repo-layout)** &nbsp;·&nbsp; **[ร่วมพัฒนา](#contributing)**
+**[ฟีเจอร์](#features)** &nbsp;·&nbsp; **[สกิล](#skills)** &nbsp;·&nbsp; **[ติดตั้ง](#install)** &nbsp;·&nbsp; **[ทำงานอย่างไร](#how-it-works)** &nbsp;·&nbsp; **[โครงสร้าง](#repo-layout)** &nbsp;·&nbsp; **[ร่วมพัฒนา](#contributing)**
 
 <br>
 
@@ -25,6 +25,119 @@ npx skills add koravut-Dev/Publish_Skill
 ```
 
 </div>
+
+<!-- intro:start -->
+<a id="features"></a>
+
+## ฟีเจอร์
+
+เขียนสกิลเสร็จแล้ว งานที่น่าเบื่อคือทำให้มันเป็น repo ที่ติดตั้งได้กับทุก agent: โครงสร้างโฟลเดอร์ README ใบอนุญาต ตรวจ secret เวอร์ชัน และ CI `publish-skill` ทำทั้งหมดนี้ด้วยสคริปต์เดียวที่ไม่ต้องติดตั้ง package ใดๆ และไม่ยอมเผยแพร่ถ้าเจอ secret หลุด
+
+<img src="assets/demo.svg" alt="ตัวอย่างในเทอร์มินัล: publish-skill แพ็กสกิลเข้า repo" width="100%">
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+#### สแกน secret
+
+ตรวจ token 19 รูปแบบ (AWS, GitHub, Slack, Anthropic, Stripe, JWT, URL ฐานข้อมูล และอื่นๆ) รายงานเป็น `ไฟล์:บรรทัด` ถ้าเจอจะหยุดก่อนเขียนไฟล์ใดๆ
+
+</td>
+<td width="33%" valign="top">
+
+#### ตรวจคุณภาพสกิล
+
+ตรวจ frontmatter คำบอกเงื่อนไขการใช้ใน description ลิงก์เสีย ชื่อเครื่องมือเฉพาะ agent ชื่อไฟล์ที่ใช้บน Windows ไม่ได้ และสคริปต์ shell ที่เป็น CRLF
+
+</td>
+<td width="33%" valign="top">
+
+#### แสดง diff ก่อนอัพเดต
+
+อัพเดตสกิลเดิมจะแสดงทุกไฟล์ที่จะเพิ่ม แก้ หรือลบ แล้วรอ `--force` ถ้าเนื้อหาเหมือนเดิมจะข้ามไป
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+#### เวอร์ชันและ changelog
+
+`--bump patch|minor|major` ตั้งเวอร์ชันและเขียน `CHANGELOG.md` ระบุสกิลที่เพิ่ม แก้ และลบ
+
+</td>
+<td valign="top">
+
+#### CI และ release
+
+`--ci` เพิ่ม GitHub Actions ที่ตรวจทุก pull request และเมื่อ push tag จะสร้าง zip แยกตามสกิลแนบไปกับ release
+
+</td>
+<td valign="top">
+
+#### ติดตั้งได้ทุกช่องทาง
+
+`npx skills add` คัดลอกเอง ดาวน์โหลด zip และ Claude Code plugin marketplace ใช้ได้จาก repo เดียวกัน README เลือกได้ทั้งอังกฤษ ไทย หรือสองภาษา
+
+</td>
+</tr>
+</table>
+
+### หกคำสั่งในสคริปต์เดียว
+
+| คำสั่ง | ทำอะไร |
+|---|---|
+| `publish` | ตรวจ คัดลอกสกิลเข้า repo แล้วสร้าง README กับ metadata ใหม่ |
+| `check` | ตรวจคุณภาพและสแกน secret อย่างเดียว เป็นคำสั่งที่ CI ใช้ |
+| `list` | แสดงสกิลใน repo และเวอร์ชัน |
+| `unpublish` | ลบสกิลแล้วรีเฟรช README กับ metadata (ต้องใส่ `--yes`) |
+| `pack` | สร้าง `.zip` หรือ `.skill` แยกตามสกิล สำหรับแจกโดยไม่ใช้ git |
+| `verify` | clone repo ที่ push แล้วมาตรวจว่าตรงกับ local และผ่านการตรวจ |
+
+### หยุดการเผยแพร่ที่มีปัญหา
+
+```text
+error: [bad-skill] a.js:1: possible GitHub token
+error: [bad-skill] a.js:2: possible connection string with a password
+warning: [demo-skill] scripts/run.sh: shell script has CRLF line endings; it will fail on macOS/Linux
+warning: [demo-skill] SKILL.md:7: link "references/missing.md" points to a file that does not exist
+error: validation failed; nothing was written
+```
+
+### อัพเดตแล้วเห็น diff ก่อนเสมอ
+
+```text
+[demo-skill] update ./demo-skill -> ./my-skills/skills/demo-skill
+    + new.txt
+    ~ SKILL.md
+    - scripts/run.sh  (deleted from the repo)
+[demo-skill] already exists with different content; rerun with --force to apply the changes above.
+```
+
+### จากโฟลเดอร์ถึง release
+
+```mermaid
+flowchart LR
+    A[Skill folder] --> B[check]
+    B --> C[publish dry run]
+    C --> D[publish]
+    D --> E[git push]
+    E --> F[CI validates]
+    F --> G[git tag]
+    G --> H[Release with zips]
+```
+
+### เริ่มใช้งาน
+
+ติดตั้งสกิล แล้วสั่ง agent ว่า *"publish skill ./my-skill ไปที่ you/my-skills"* หรือรันสคริปต์เอง:
+
+```bash
+node skills/publish-skill/scripts/publish-skill.mjs publish --skill ./my-skill --repo ./my-skills --github you/my-skills --plugin --ci --dry-run
+```
+
+เมื่อแผนถูกต้องแล้วค่อยเอา `--dry-run` ออก สคริปต์ไม่ push ให้เอง ขั้นตอน git เป็นการตัดสินใจของคุณ
+<!-- intro:end -->
 
 <!-- skills:start -->
 <!-- skills:lang=th -->

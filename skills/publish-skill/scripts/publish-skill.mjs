@@ -509,6 +509,8 @@ function updateChangelog(cur, entry) {
 // ---- generators ------------------------------------------------------------
 const START = '<!-- skills:start -->';
 const END = '<!-- skills:end -->';
+// Hand-written showcase between these markers survives --fresh.
+const INTRO = /<!-- intro:start -->[\s\S]*?<!-- intro:end -->/;
 const FENCE = '```';
 const xml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const html = xml;
@@ -525,7 +527,7 @@ const AGENT_DIRS = [
 const STRINGS = {
   en: {
     skills: 'Skills', install: 'Install', how: 'How it works', layout: 'Repo layout', contrib: 'Contributing',
-    navLayout: 'Layout', navContrib: 'Contribute',
+    navLayout: 'Layout', navContrib: 'Contribute', features: 'Features',
     tip: 'One command installs every skill in this repo into all the agents it detects.',
     every: 'every skill in this repo', single: 'a single skill',
     market: 'Claude Code plugin marketplace', manual: 'Manual copy', zip: 'Download a zip',
@@ -545,7 +547,7 @@ const STRINGS = {
   },
   th: {
     skills: 'สกิล', install: 'ติดตั้ง', how: 'ทำงานอย่างไร', layout: 'โครงสร้าง repo', contrib: 'ร่วมพัฒนา',
-    navLayout: 'โครงสร้าง', navContrib: 'ร่วมพัฒนา',
+    navLayout: 'โครงสร้าง', navContrib: 'ร่วมพัฒนา', features: 'ฟีเจอร์',
     tip: 'คำสั่งเดียวติดตั้งทุกสกิลใน repo นี้ให้ทุก agent ที่ตรวจพบในเครื่อง',
     every: 'ทุกสกิลใน repo นี้', single: 'เฉพาะสกิลเดียว',
     market: 'Claude Code plugin marketplace', manual: 'คัดลอกเอง', zip: 'ดาวน์โหลดเป็น zip',
@@ -636,7 +638,7 @@ function bannerSvg({ title, tagline, count }) {
 `;
 }
 
-function readmeHeader({ title, ref, license, count, lang, both, feat }) {
+function readmeHeader({ title, ref, license, count, lang, both, feat, intro }) {
   const t = STRINGS[lang];
   const realRef = !ref.includes('<');
   const badge = (alt, src, href) => {
@@ -667,7 +669,7 @@ function readmeHeader({ title, ref, license, count, lang, both, feat }) {
 ${badges}
 <br>
 
-${switcher}**[${t.skills}](#skills)** &nbsp;·&nbsp; **[${t.install}](#install)** &nbsp;·&nbsp; **[${t.how}](#how-it-works)** &nbsp;·&nbsp; **[${t.navLayout}](#repo-layout)** &nbsp;·&nbsp; **[${t.navContrib}](#contributing)**
+${switcher}${intro ? `**[${t.features}](#features)** &nbsp;·&nbsp; ` : ''}**[${t.skills}](#skills)** &nbsp;·&nbsp; **[${t.install}](#install)** &nbsp;·&nbsp; **[${t.how}](#how-it-works)** &nbsp;·&nbsp; **[${t.navLayout}](#repo-layout)** &nbsp;·&nbsp; **[${t.navContrib}](#contributing)**
 
 <br>
 
@@ -1110,7 +1112,9 @@ async function refreshRepo(ctx) {
     let readme;
     if (full) {
       const tagline = args.tagline || STRINGS[l].tagline(skills);
-      readme = `${readmeHeader({ title, ref, license, count: skills.length, lang: l, both: lang === 'both', feat })}${block}\n\n${readmeFooter(l)}`;
+      const intro = has(file) ? fs.readFileSync(path.join(repo, file), 'utf8').match(INTRO)?.[0] : null;
+      if (intro) say(`keep  ${file} intro block (between <!-- intro:start --> and <!-- intro:end -->)`);
+      readme = `${readmeHeader({ title, ref, license, count: skills.length, lang: l, both: lang === 'both', feat, intro: !!intro })}${intro ? `${intro}\n\n` : ''}${block}\n\n${readmeFooter(l)}`;
       if (!bannerDone) {
         write('assets/banner.svg', bannerSvg({ title, tagline: args.tagline || STRINGS.en.tagline(skills), count: skills.length }));
         bannerDone = true;

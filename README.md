@@ -16,7 +16,7 @@
 
 **English** &nbsp;·&nbsp; [ไทย](README.th.md)
 
-**[Skills](#skills)** &nbsp;·&nbsp; **[Install](#install)** &nbsp;·&nbsp; **[How it works](#how-it-works)** &nbsp;·&nbsp; **[Layout](#repo-layout)** &nbsp;·&nbsp; **[Contribute](#contributing)**
+**[Features](#features)** &nbsp;·&nbsp; **[Skills](#skills)** &nbsp;·&nbsp; **[Install](#install)** &nbsp;·&nbsp; **[How it works](#how-it-works)** &nbsp;·&nbsp; **[Layout](#repo-layout)** &nbsp;·&nbsp; **[Contribute](#contributing)**
 
 <br>
 
@@ -25,6 +25,117 @@ npx skills add koravut-Dev/Publish_Skill
 ```
 
 </div>
+
+<!-- intro:start -->
+## Features
+
+You wrote a skill. Turning it into a repo that installs cleanly in every agent is the tedious part: layout, README, license, secret checks, versions, CI. `publish-skill` does all of it with one dependency-free script, and refuses to publish anything that leaks a secret.
+
+<img src="assets/demo.svg" alt="Terminal demo: publish-skill packaging a skill into a repo" width="100%">
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+#### Secret scan
+
+19 token patterns (AWS, GitHub, Slack, Anthropic, Stripe, JWTs, database URLs and more), reported as `file:line`. A hit stops the publish before anything is written.
+
+</td>
+<td width="33%" valign="top">
+
+#### Skill linter
+
+Checks the frontmatter, the description's trigger wording, broken links, agent-specific tool names, Windows-invalid file names and CRLF shell scripts.
+
+</td>
+<td width="33%" valign="top">
+
+#### Diff before update
+
+Updating a skill prints every file that will be added, changed or deleted, and waits for `--force`. Identical content is skipped.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+#### Versions and changelog
+
+`--bump patch|minor|major` sets the version and writes a `CHANGELOG.md` entry listing added, changed and removed skills.
+
+</td>
+<td valign="top">
+
+#### CI and releases
+
+`--ci` adds GitHub Actions that validate every pull request, then build one zip per skill and attach them to a release when you push a tag.
+
+</td>
+<td valign="top">
+
+#### Every install route
+
+`npx skills add`, manual copy, zip download and the Claude Code plugin marketplace all work from the same repo. README in English, Thai or both.
+
+</td>
+</tr>
+</table>
+
+### Six commands, one script
+
+| Command | What it does |
+|---|---|
+| `publish` | Validate, copy skills into the repo, regenerate README and metadata |
+| `check` | Lint and secret-scan only; this is what CI runs |
+| `list` | Show the skills in a repo and its version |
+| `unpublish` | Remove a skill and refresh README and metadata (needs `--yes`) |
+| `pack` | Build one `.zip` or `.skill` per skill for sharing without git |
+| `verify` | Clone the pushed repo and confirm it matches local and validates |
+
+### It stops bad publishes
+
+```text
+error: [bad-skill] a.js:1: possible GitHub token
+error: [bad-skill] a.js:2: possible connection string with a password
+warning: [demo-skill] scripts/run.sh: shell script has CRLF line endings; it will fail on macOS/Linux
+warning: [demo-skill] SKILL.md:7: link "references/missing.md" points to a file that does not exist
+error: validation failed; nothing was written
+```
+
+### Updates show a diff first
+
+```text
+[demo-skill] update ./demo-skill -> ./my-skills/skills/demo-skill
+    + new.txt
+    ~ SKILL.md
+    - scripts/run.sh  (deleted from the repo)
+[demo-skill] already exists with different content; rerun with --force to apply the changes above.
+```
+
+### From folder to release
+
+```mermaid
+flowchart LR
+    A[Skill folder] --> B[check]
+    B --> C[publish dry run]
+    C --> D[publish]
+    D --> E[git push]
+    E --> F[CI validates]
+    F --> G[git tag]
+    G --> H[Release with zips]
+```
+
+### Quick start
+
+Install the skill, then ask your agent: *"publish skill ./my-skill to you/my-skills"*. Or run the script yourself:
+
+```bash
+node skills/publish-skill/scripts/publish-skill.mjs publish --skill ./my-skill --repo ./my-skills --github you/my-skills --plugin --ci --dry-run
+```
+
+Drop `--dry-run` once the plan looks right. Nothing is ever pushed for you: git steps stay your call.
+<!-- intro:end -->
 
 <!-- skills:start -->
 <!-- skills:lang=en -->

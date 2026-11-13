@@ -194,6 +194,11 @@ was a leaked secret (the secret must be rotated, not just deleted).
 - By default only the block between `<!-- skills:start -->` and
   `<!-- skills:end -->` is regenerated, so hand-written text around it
   survives. `--fresh` regenerates the whole README and the banner.
+- A hand-written showcase (feature list, screenshots, demo) goes between
+  `<!-- intro:start -->` and `<!-- intro:end -->`, above the skills block.
+  That block survives `--fresh` too, and the header then links to
+  `#features`, so give the block a "Features" heading or an
+  `<a id="features"></a>` anchor.
 
 ## Rules
 

@@ -2,6 +2,11 @@
 
 All notable changes to the skills in this repo. Versions follow [semver](https://semver.org).
 
+## [1.1.1] - 2026-11-13
+
+### Notes
+- README showcase block that survives --fresh, terminal demo image
+
 ## [1.1.0] - 2026-11-13
 
 ### Notes
